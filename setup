@@ -1,0 +1,58 @@
+# Create a virtual environment in your home directory
+python3 -m venv ~/mavproxy_env
+
+# Activate the virtual environment
+source ~/mavproxy_env/bin/activate
+
+docker stop ros2_jazzy
+docker rm ros2_jazzy
+
+docker run -it --name ros2_jazzy --user root --device /dev/ttyACM0 ros:jazzy-ros-base
+
+\
+
+docker start -ai ros2_jazzy
+
+/////
+# Update and install prerequisites
+apt update && apt install -y curl gnupg2 lsb-release software-properties-common wget python3-pip
+
+# Add ROS 2 repository
+curl -sSL https://raw.githubusercontent.com/ros/rosdistro/master/ros.key | apt-key add -
+sh -c 'echo "deb http://packages.ros.org/ros2/ubuntu $(lsb_release -cs) main" > /etc/apt/sources.list.d/ros2-latest.list'
+apt update
+
+# Install MAVROS
+apt install -y ros-jazzy-mavros
+
+# Install geographiclib datasets
+wget https://raw.githubusercontent.com/mavlink/mavros/ros2/mavros/scripts/install_geographiclib_datasets.sh
+chmod +x install_geographiclib_datasets.sh
+./install_geographiclib_datasets.sh
+
+# Source ROS 2 automatically in future shells
+echo "source /opt/ros/jazzy/setup.bash" >> ~/.bashrc
+source ~/.bashrc
+/////
+
+ros2 run mavros mavros_node --ros-args --param fcu_url:=/dev/ttyACM0:115200
+
+\
+
+docker exec -it ros2_jazzy bash -c "source /opt/ros/jazzy/setup.bash && ros2 topic list && ros2 topic echo /mavros/state"
+
+
+
+
+docker exec -it ros2_jazzy bash
+
+
+
+
+
+
+IMU: 
+ros2 topic echo /mavros/imu/data
+
+DBR4: 
+ros2 topic echo /mavros/rc/in
